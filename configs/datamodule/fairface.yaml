@@ -23,3 +23,10 @@ aug:
   - _target_: albumentations.ImageCompression
     quality_lower: 30
     p: 0.5
+  - _target_: albumentations.CoarseDropout
+    min_holes: 1
+    max_holes: 8
+    min_width: 0.03125
+    max_width: 0.125
+    max_height: 0.125
+    p: 0.5
