@@ -118,8 +118,9 @@ class LogImagePredictions(Callback):
             val_imgs, val_labels = val_samples
 
             # run the batch through the network
-            _, preds, _, _ = pl_module.step(val_samples)
             val_imgs = val_imgs.to(device=pl_module.device)
+            val_labels = val_labels.to(device=pl_module.device)
+            _, preds, _, _ = pl_module.step((val_imgs, val_labels))
 
             # log the images as wandb Image
             experiment.log(
