@@ -1,0 +1,2 @@
+_target_: src.models.loss.CoralLoss
+num_classes: ${datamodule.num_classes}

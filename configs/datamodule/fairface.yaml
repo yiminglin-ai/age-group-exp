@@ -1,0 +1,23 @@
+_target_: src.datamodules.fairface.FairFaceAge
+
+data_dir: ${data_dir} # data_dir is specified in config.yaml
+data_folder: "FairFace"
+margin: 0.25 # either 0.25 or 1.25
+num_classes: 9
+batch_size: 128
+num_workers: 4
+pin_memory: False
+aug:
+  - _target_: albumentations.HorizontalFlip
+    p: 0.5
+  - _target_: albumentations.Blur
+    p: 0.5
+  - _target_: albumentations.ColorJitter
+    brightness: 0.3
+    contrast: 0.3
+    saturation: 0.3
+    hue: 0.3
+    p: 0.5
+  - _target_: albumentations.ImageCompression
+    quality_lower: 30
+    p: 0.5

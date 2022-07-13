@@ -1,0 +1,8 @@
+_target_: src.models.timm_module.OrdinalRegressor
+
+num_classes: ${datamodule.num_classes}
+head: "linear" # linear, coral
+backbone: # https://rwightman.github.io/pytorch-image-models/feature_extraction/
+  _target_: timm.create_model
+  model_name: "resnet18"
+  pretrained: True
