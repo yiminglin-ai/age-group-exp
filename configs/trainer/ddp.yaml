@@ -4,3 +4,5 @@ defaults:
 gpus: 4
 strategy: ddp
 sync_batchnorm: True
+weights_summary: "full"
+progress_bar_refresh_rate: 5
