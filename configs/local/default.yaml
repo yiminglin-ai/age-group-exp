@@ -1,0 +1,16 @@
+# @package _global_
+
+defaults:
+  - override /hydra/launcher: submitit_slurm
+
+hydra:
+  launcher:
+    timeout_min: 1440
+    partition: "hipri"
+    cpus_per_task: 10
+    gpus_per_node: ${trainer.gpus}
+    tasks_per_node: ${.gpus_per_node}
+    mem_gb: null
+    name: ${hydra.job.name}
+    submitit_folder: ${hydra.sweep.dir}/.submitit/%j
+    account: all
