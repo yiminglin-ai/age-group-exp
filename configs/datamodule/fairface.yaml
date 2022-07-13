@@ -8,6 +8,8 @@ batch_size: 128
 num_workers: 4
 pin_memory: False
 aug:
+  - _target_: albumentations.LongestMaxSize
+    max_size: 224
   - _target_: albumentations.HorizontalFlip
     p: 0.5
   - _target_: albumentations.Blur
