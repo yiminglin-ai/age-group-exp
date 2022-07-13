@@ -1,0 +1,26 @@
+defaults:
+  - fairface.yaml
+
+aug:
+  - _target_: albumentations.LongestMaxSize
+    max_size: 224
+  - _target_: albumentations.HorizontalFlip
+    p: 0.5
+  - _target_: albumentations.Blur
+    p: 0.5
+  - _target_: albumentations.ColorJitter
+    brightness: 0.3
+    contrast: 0.3
+    saturation: 0.3
+    hue: 0.3
+    p: 0.5
+  - _target_: albumentations.ImageCompression
+    quality_lower: 30
+    p: 0.5
+  - _target_: albumentations.CoarseDropout
+    min_holes: 1
+    max_holes: 8
+    min_width: 0.03125
+    max_width: 0.125
+    max_height: 0.125
+    p: 0.5

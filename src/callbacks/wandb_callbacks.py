@@ -112,30 +112,38 @@ class LogImagePredictions(Callback):
         """Start executing this callback only after all validation sanity checks end."""
         self.ready = True
 
+    def _shared_step(self, trainer, batch, pl_module, suffix="train"):
+        logger = get_wandb_logger(trainer=trainer)
+        experiment = logger.experiment
+
+        # get a validation batch from the validation dat loader
+        val_imgs, val_labels = batch
+
+        # run the batch through the network
+        val_imgs = val_imgs.to(device=pl_module.device)
+        val_labels = val_labels.to(device=pl_module.device)
+        _, preds, _, _ = pl_module.step((val_imgs, val_labels))
+
+        # log the images as wandb Image
+        experiment.log(
+            {
+                f"Images/{experiment.name}_{suffix}": [
+                    wandb.Image(x, caption=f"Pred:{pred}, Label:{y}")
+                    for x, pred, y in zip(
+                        val_imgs[: self.num_samples],
+                        preds[: self.num_samples],
+                        val_labels[: self.num_samples],
+                    )
+                ]
+            }
+        )
+
+    def on_train_epoch_start(self, trainer, pl_module):
+        if self.ready:
+            batch = next(iter(trainer.datamodule.train_dataloader()))
+            self._shared_step(trainer, batch, pl_module, suffix="train")
+
     def on_validation_epoch_end(self, trainer, pl_module):
         if self.ready:
-            logger = get_wandb_logger(trainer=trainer)
-            experiment = logger.experiment
-
-            # get a validation batch from the validation dat loader
-            val_samples = next(iter(trainer.datamodule.val_dataloader()))
-            val_imgs, val_labels = val_samples
-
-            # run the batch through the network
-            val_imgs = val_imgs.to(device=pl_module.device)
-            val_labels = val_labels.to(device=pl_module.device)
-            _, preds, _, _ = pl_module.step((val_imgs, val_labels))
-
-            # log the images as wandb Image
-            experiment.log(
-                {
-                    f"Images/{experiment.name}": [
-                        wandb.Image(x, caption=f"Pred:{pred}, Label:{y}")
-                        for x, pred, y in zip(
-                            val_imgs[: self.num_samples],
-                            preds[: self.num_samples],
-                            val_labels[: self.num_samples],
-                        )
-                    ]
-                }
-            )
+            batch = next(iter(trainer.datamodule.val_dataloader()))
+            self._shared_step(trainer, batch, pl_module, suffix="val")
