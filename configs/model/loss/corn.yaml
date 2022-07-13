@@ -1,2 +1,2 @@
-_target_: src.models.loss.CoralLoss
+_target_: src.models.loss.CornLoss
 num_classes: ${datamodule.num_classes}

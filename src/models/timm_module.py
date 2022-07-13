@@ -2,12 +2,12 @@ from typing import Any, List, Optional
 
 import hydra
 import torch
+from coral_pytorch.layers import CoralLayer
 from pytorch_lightning import LightningModule
+from torch import nn
 from torchmetrics import MinMetric
 from torchmetrics.classification.accuracy import Accuracy
-from torchmetrics.regression import MeanAbsoluteError 
-from torch import nn
-from coral_pytorch.layers import CoralLayer
+from torchmetrics.regression import MeanAbsoluteError
 
 
 class OrdinalRegressor(LightningModule):
@@ -29,16 +29,14 @@ class OrdinalRegressor(LightningModule):
         ch = self.net.feature_info.channels()[-1]
         if head == "linear":
             classifer = nn.Linear(ch, num_classes)
-        elif head=="coral":
-            classifer=CoralLayer(size_in=ch, num_classes=num_classes)
+        elif head == "coral":
+            classifer = CoralLayer(size_in=ch, num_classes=num_classes)
+        elif head == "corn":
+            classifer = nn.Linear(ch, num_classes - 1)
         else:
             raise ValueError(f"Unknown head type: {head}")
 
-        self.output_layer = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),
-            nn.Flatten(),
-            classifer
-        )
+        self.output_layer = nn.Sequential(nn.AdaptiveAvgPool2d(1), nn.Flatten(), classifer)
 
         # loss function
         self.criterion = hydra.utils.instantiate(loss)
@@ -55,7 +53,6 @@ class OrdinalRegressor(LightningModule):
 
     def forward(self, x: torch.Tensor):
         return self.output_layer(self.net(x)[-1])
-
 
     def step(self, batch: Any):
         x, y = batch
@@ -92,7 +89,7 @@ class OrdinalRegressor(LightningModule):
 
     def validation_step(self, batch: Any, batch_idx: int):
         loss, preds, targets, metrics = self.step(batch)
-        
+
         # log val metrics
         self.val_mae(preds, targets)
         self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=False)
@@ -110,7 +107,7 @@ class OrdinalRegressor(LightningModule):
         self.val_mae_best.update(mae)
         self.log("val/mae_best", self.val_mae_best.compute(), on_epoch=True, prog_bar=True)
 
-    #TODO: add test step
+    # TODO: add test step
     def test_step(self, batch: Any, batch_idx: int):
         pass
         # loss, preds, targets, metrics = self.step(batch)
@@ -126,6 +123,7 @@ class OrdinalRegressor(LightningModule):
 
     def configure_optimizers(self):
         """Choose what optimizers and learning-rate schedulers to use in your optimization.
+
         Normally you'd need one. But in the case of GANs or similar you might have multiple.
         See examples here:
             https://pytorch-lightning.readthedocs.io/en/latest/common/lightning_module.html#configure-optimizers

@@ -4,17 +4,16 @@
 #
 # License: MIT
 
-import torch.nn.functional as F
-import torch
 import math
-from coral_pytorch.losses import coral_loss
-from coral_pytorch.dataset import levels_from_labelbatch
-from coral_pytorch.dataset import proba_to_label
+
+import torch
+import torch.nn.functional as F
+from coral_pytorch.dataset import corn_label_from_logits, levels_from_labelbatch, proba_to_label
+from coral_pytorch.losses import coral_loss, corn_loss
+
 
 def normal_sampling(mean, label_k, std=2):
-    return math.exp(-((label_k - mean) ** 2) / (2 * std**2)) / (
-        math.sqrt(2 * math.pi) * std
-    )
+    return math.exp(-((label_k - mean) ** 2) / (2 * std**2)) / (math.sqrt(2 * math.pi) * std)
 
 
 def get_dist_batch(targets, num_classes, std=2):
@@ -40,6 +39,7 @@ class DexLoss(torch.nn.Module):
         else:
             logits = logits.sigmoid()
         pred = torch.squeeze((logits * a).sum(1, keepdim=True), dim=1)
+        pred = torch.round(pred)
         mae = (pred - target).abs().mean()
         return {"loss": loss + mae, "preds": pred}
 
@@ -50,10 +50,17 @@ class CoralLoss(torch.nn.Module):
         self.num_classes = num_classes
 
     def forward(self, logits: torch.Tensor, target: torch.Tensor, **kwargs):
-        levels = levels_from_labelbatch(
-            target, num_classes=self.num_classes).type_as(logits)
+        levels = levels_from_labelbatch(target, num_classes=self.num_classes).type_as(logits)
 
         loss = coral_loss(logits, levels.type_as(logits))
         probas = torch.sigmoid(logits)
         pred = proba_to_label(probas)
-        return {"loss": loss,  "preds": pred}
+        return {"loss": loss, "preds": pred}
+
+
+class CornLoss(CoralLoss):
+    def forward(self, logits: torch.Tensor, target: torch.Tensor, **kwargs):
+
+        loss = corn_loss(logits, target, num_classes=self.num_classes)
+        pred = corn_label_from_logits(logits)
+        return {"loss": loss, "preds": pred}

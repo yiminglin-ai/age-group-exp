@@ -1,17 +1,17 @@
 import os
-from typing import Callable, Optional, Tuple, List
+from typing import Callable, List, Optional, Tuple
+
+import albumentations as A
 import cv2
 import hydra
 import pandas as pd
-
 import torch
+from albumentations.pytorch import ToTensorV2
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import ConcatDataset, DataLoader, Dataset, random_split
-from torchvision.datasets import VisionDataset, ImageFolder
+from torchvision.datasets import ImageFolder, VisionDataset
 from torchvision.datasets.folder import default_loader
 from torchvision.transforms import transforms
-from albumentations.pytorch import ToTensorV2
-import albumentations as A
 
 AGE_BUCKETS = (
     "0-2",
@@ -24,6 +24,7 @@ AGE_BUCKETS = (
     "60-69",
     "more than 70",
 )
+
 
 def convert_age_bucket_to_label(age_bucket: str) -> int:
     return AGE_BUCKETS.index(age_bucket)
@@ -80,7 +81,7 @@ class FairFaceAge(LightningDataModule):
     def __init__(
         self,
         data_dir: str = "data",
-        data_folder:str = "FairFace",
+        data_folder: str = "FairFace",
         margin: float = 0.25,
         num_classes: int = 9,
         filename_column: str = "file",
@@ -131,10 +132,23 @@ class FairFaceAge(LightningDataModule):
 
         # load datasets only if they're not loaded already
         if not self.data_train and not self.data_val and not self.data_test:
-            trainset = PandasDataset(self.img_dir, self.train_csv, self.hparams.filename_column, self.hparams.age_column, self.train_transforms, convert_age_bucket_to_label)
-            valset = PandasDataset(self.img_dir, self.val_csv, self.hparams.filename_column, self.hparams.age_column, self.val_transforms, convert_age_bucket_to_label)
+            trainset = PandasDataset(
+                self.img_dir,
+                self.train_csv,
+                self.hparams.filename_column,
+                self.hparams.age_column,
+                self.train_transforms,
+                convert_age_bucket_to_label,
+            )
+            valset = PandasDataset(
+                self.img_dir,
+                self.val_csv,
+                self.hparams.filename_column,
+                self.hparams.age_column,
+                self.val_transforms,
+                convert_age_bucket_to_label,
+            )
             self.data_train, self.data_val, self.data_test = trainset, valset, valset
-              
 
     def train_dataloader(self):
         return DataLoader(

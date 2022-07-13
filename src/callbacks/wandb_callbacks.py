@@ -12,8 +12,10 @@ from pytorch_lightning.utilities import rank_zero_only
 from sklearn import metrics
 from sklearn.metrics import f1_score, precision_score, recall_score
 
+
 class LogConfusionMatrix(Callback):
     """Generate confusion matrix every epoch and send it to wandb.
+
     Expects validation step to return predictions and targets.
     """
 
@@ -69,6 +71,7 @@ class LogConfusionMatrix(Callback):
             self.preds.clear()
             self.targets.clear()
 
+
 def get_wandb_logger(trainer: Trainer) -> WandbLogger:
     """Safely get Weights&Biases logger from Trainer."""
 
@@ -92,6 +95,7 @@ def get_wandb_logger(trainer: Trainer) -> WandbLogger:
 
 class LogImagePredictions(Callback):
     """Logs a validation batch and their predictions to wandb.
+
     Example adapted from:
         https://wandb.ai/wandb/wandb-lightning/reports/Image-Classification-using-PyTorch-Lightning--VmlldzoyODk1NzY
     """
